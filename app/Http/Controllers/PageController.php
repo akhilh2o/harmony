@@ -87,7 +87,7 @@ class PageController extends Controller
         $page->detail = $input['detail'];
         $page->save();
 
-        return $this->sendResponse(new PageResource($page), 'Product updated successfully.');
+        return $this->sendResponse(new PageResource($page), 'Page updated successfully.');
     }
 
     /**

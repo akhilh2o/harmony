@@ -19,6 +19,23 @@ class Page extends Model
         'feature_image', // Add feature_image to fillable properties
     ];
 
+    public $statusOptions = ['draft', 'published', 'archived', 'deleted'];
+
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where('status', 'archived');
+    }
+
 
     // Generate slug if not provided
     public static function boot()

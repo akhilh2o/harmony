@@ -24,18 +24,38 @@ class PageResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('title')
-                    ->maxLength(255),
+                    ->required()
+                    ->placeholder('Enter page title')
+                    ->maxLength(255)
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, $set) {
+                        $set('slug', str($state)->slug());
+                    }),
                 Forms\Components\TextInput::make('subtitle')
+                    ->placeholder('Enter page subtitle')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('slug')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('content')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'draft' => 'Draft',
+                        'published' => 'Published',
+                        'archived' => 'Archived',
+                        'deleted' => 'Deleted',
+                    ])
+                    ->native(false)
+                    ->searchable()
                     ->required(),
+                Forms\Components\Textarea::make('content')
+                    ->required()
+                    ->rows(6)
+                    ->placeholder('Enter page content')
+                    ->columnSpanFull(),
                 Forms\Components\FileUpload::make('feature_image')
-                    ->image(),
+                    ->imageEditor()
+                    ->image()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -43,14 +63,18 @@ class PageResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('feature_image')
+                    ->circular()
+                    ->size(50)
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('subtitle')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status'),
-                Tables\Columns\ImageColumn::make('feature_image'),
+                Tables\Columns\TextColumn::make('status')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Status'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -65,6 +89,7 @@ class PageResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

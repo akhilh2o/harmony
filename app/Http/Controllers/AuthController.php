@@ -24,7 +24,7 @@ class AuthController extends Controller
         return Socialite::driver($provider)->stateless()->redirect();
     }
 
-    public function handleProviderCallback($provider)
+    public function handleProviderCallback(Request $request, $provider)
     {
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
@@ -73,7 +73,7 @@ class AuthController extends Controller
                 'success'   => true,
                 'data'      => new UserResource($user),
                 'token'     => $token,
-                'message'   => 'Registration successful'
+                'message'   => 'Registration successful.'
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -93,7 +93,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid email or password'
             ], 401);
         }
 
