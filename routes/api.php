@@ -17,5 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
+    Route::get('/login/with/{provider}','redirectToProvider');
+    Route::get('/login/with/{provider}/callback', 'handleProviderCallback');
     Route::post('login', 'login');
 });

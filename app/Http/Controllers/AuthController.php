@@ -13,9 +13,46 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+
 
 class AuthController extends Controller
 {
+
+    public function redirectToProvider(Request $request, $provider)
+    {
+        return Socialite::driver($provider)->stateless()->redirect();
+    }
+
+    public function handleProviderCallback($provider)
+    {
+        try {
+            $socialUser = Socialite::driver($provider)->stateless()->user();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Authentication failed.'], 500);
+        }
+
+        $user = User::where('email', $socialUser->email)->first();
+
+        if ($user) {
+            // Update or link the social account to the existing user
+            // Generate API token using Laravel Sanctum
+            $token = $user->createToken('authToken')->plainTextToken;
+        } else {
+            // Create a new user if not found
+            $user = User::create([
+                'name' => $socialUser->name,
+                'email' => $socialUser->email,
+                'password' => null, // Social logins don't have passwords
+                'oauth_uid' => $socialUser->id,
+                'provider' => $provider, // Store the provider name
+            ]);
+            // Generate API token using Laravel Sanctum
+            $token = $user->createToken('authToken')->plainTextToken;
+        }
+
+        return response()->json(['token' => $token, 'user' => $user]);
+    }
     /**
      * Register a new user
      */
