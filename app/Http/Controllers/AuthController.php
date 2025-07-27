@@ -37,7 +37,7 @@ class AuthController extends Controller
         if ($user) {
             // Update or link the social account to the existing user
             // Generate API token using Laravel Sanctum
-            $token = $user->createToken('authToken')->plainTextToken;
+            $token = $user->createToken('auth_token')->plainTextToken;
         } else {
             // Create a new user if not found
             $user = User::create([
@@ -48,7 +48,7 @@ class AuthController extends Controller
                 'provider' => $provider, // Store the provider name
             ]);
             // Generate API token using Laravel Sanctum
-            $token = $user->createToken('authToken')->plainTextToken;
+            $token = $user->createToken('auth_token')->plainTextToken;
         }
 
         return response()->json(['token' => $token, 'user' => $user]);
@@ -61,10 +61,11 @@ class AuthController extends Controller
         try {
             $userData = $request->validated();
             $user = User::create([
-                'name'      => $userData->name,
-                'email'     => $userData->email,
-                'phone'     => $userData->phone,
-                'password'  => Hash::make($userData->password),
+                'name'           => $userData['name'],
+                'email'          => $userData['email'],
+                'phone_code'     => $userData['phone_code'] ?? null,
+                'phone'          => $userData['phone'] ?? null,
+                'password'       => Hash::make($userData['password']),
             ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
