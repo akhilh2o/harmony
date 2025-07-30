@@ -25,4 +25,18 @@ class SessionController extends Controller
 
         return $this->sendResponse(SessionAudioResource::collection($sessionAudios), 'Session Audios retrieved successfully.');
     }
+    
+    public function sessionAudioById($id)
+    {
+        $sessionAudio = SessionAudio::with('session_category')->where('is_active', 1)->where('id', $id)->first();
+
+        return $this->sendResponse(SessionAudioResource::make($sessionAudio), 'Session Audio retrieved successfully.');
+    }
+    
+    public function sessionAudioByCategoryId($id)
+    {
+        $sessionAudios = SessionAudio::with('session_category')->where('is_active', 1)->where('session_category_id', $id)->get();
+
+        return $this->sendResponse(SessionAudioResource::collection($sessionAudios), 'Session Audios retrieved successfully.');
+    }
 }
