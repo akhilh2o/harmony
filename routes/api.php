@@ -13,6 +13,8 @@ Route::get('/user', function (Request $request) {
 
 Route::resource('pages', PageController::class);
 Route::get('/session-audios', [SessionController::class, 'sessionAudios']);
+Route::get('/session-audios/{id}', [SessionController::class, 'sessionAudioById']);
+Route::get('/session-audios/category/{id}', [SessionController::class, 'sessionAudioByCategoryId']);
 Route::get('/session-categories', [SessionController::class, 'sessionCategories']);
 
 
