@@ -8,6 +8,7 @@ class SessionAudio extends Model
 {
     protected $guarded = [];
 
+    protected $table = 'session_audio';
 
     public function session_category()
     {

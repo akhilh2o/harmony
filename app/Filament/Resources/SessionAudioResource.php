@@ -23,7 +23,7 @@ class SessionAudioResource extends Resource
 
     protected static ?string $navigationGroup = 'Session Management';
 
-    protected static ?string $navigationLabel = 'Session';
+    protected static ?string $navigationLabel = 'Session Audios';
 
     protected static ?int $navigationSort = 2;
 
@@ -67,7 +67,7 @@ class SessionAudioResource extends Resource
                                     ->postfix('Mins')
                                     ->maxLength(255),
                                 Forms\Components\FileUpload::make('file')
-                                    // ->required()
+                                    ->maxSize(51200) // 50MB
                                     ->label('Audio File')
                                     ->columnSpanFull()
                                     ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm']),
