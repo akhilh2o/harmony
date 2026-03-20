@@ -3,23 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-users';
-    
+    protected static ?string $navigationIcon  = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'Users Management';
+    protected static ?int    $navigationSort  = 1;
 
     public static function getNavigationBadge(): ?string
     {
@@ -28,112 +25,110 @@ class UserResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
-                Forms\Components\TextInput::make('phone_code')
-                    ->tel()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('phone')
-                    ->tel()
-                    ->maxLength(255),
-                Forms\Components\DateTimePicker::make('phone_verified_at'),
-                Forms\Components\TextInput::make('password')
-                    ->password()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('avatar')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('otp_code')
-                    ->maxLength(255),
-                Forms\Components\DateTimePicker::make('otp_expires_at'),
-                Forms\Components\TextInput::make('provider')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('provider_id')
-                    ->maxLength(255),
-                Forms\Components\Toggle::make('is_admin')
-                    ->required(),
-                Forms\Components\Toggle::make('is_active')
-                    ->required(),
-            ]);
+        return $form->schema([
+            Forms\Components\Group::make()->schema([
+
+                Section::make('Basic Information')->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->required()->maxLength(255),
+                    Forms\Components\TextInput::make('email')
+                        ->email()->required()->maxLength(255)
+                        ->unique(User::class, 'email', ignoreRecord: true),
+                    Forms\Components\TextInput::make('phone_code')
+                        ->label('Phone Code')->tel()->maxLength(10),
+                    Forms\Components\TextInput::make('phone')
+                        ->tel()->maxLength(20)
+                        ->unique(User::class, 'phone', ignoreRecord: true),
+                    Forms\Components\TextInput::make('password')
+                        ->password()->maxLength(255)
+                        ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->label('Password (leave blank to keep current)'),
+                    Forms\Components\FileUpload::make('avatar')
+                        ->image()->directory('avatars')->imageEditor(),
+                ])->columns(2),
+
+            ])->columnSpan(['lg' => 2]),
+
+            Forms\Components\Group::make()->schema([
+
+                Section::make('Account Settings')->schema([
+                    Forms\Components\Toggle::make('is_admin')
+                        ->label('Admin')->required(),
+                    Forms\Components\Toggle::make('is_active')
+                        ->label('Active')->required()->default(true),
+                ]),
+
+                Section::make('Subscription')->schema([
+                    Forms\Components\Toggle::make('is_subscribed')
+                        ->label('Subscribed')->reactive(),
+                    Forms\Components\Select::make('subscription_plan')
+                        ->options(['monthly' => 'Monthly', 'yearly' => 'Yearly'])
+                        ->visible(fn ($get) => $get('is_subscribed')),
+                    Forms\Components\DateTimePicker::make('subscription_expires_at')
+                        ->label('Expires At')
+                        ->visible(fn ($get) => $get('is_subscribed')),
+                ]),
+
+                Section::make('Verification')->schema([
+                    Forms\Components\DateTimePicker::make('email_verified_at')
+                        ->label('Email Verified'),
+                    Forms\Components\DateTimePicker::make('phone_verified_at')
+                        ->label('Phone Verified'),
+                ]),
+
+            ])->columnSpan(['lg' => 1]),
+        ])->columns(3);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('phone_code')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('avatar')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('otp_code')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('otp_expires_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('provider')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('provider_id')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_admin')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
+                Tables\Columns\ImageColumn::make('avatar')
+                    ->circular()->size(40)->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&color=c9a84c&background=27221a'),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('email')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('phone')->searchable()->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')->label('Active')->boolean()->sortable(),
+                Tables\Columns\IconColumn::make('is_admin')->label('Admin')->boolean()->sortable(),
+                Tables\Columns\IconColumn::make('is_subscribed')->label('Pro')->boolean()->sortable(),
+                Tables\Columns\TextColumn::make('subscription_plan')
+                    ->label('Plan')->badge()
+                    ->color(fn ($state) => match($state) { 'yearly' => 'success', 'monthly' => 'warning', default => 'gray' })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('subscription_expires_at')
+                    ->label('Expires')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('is_active')->label('Active'),
+                Tables\Filters\TernaryFilter::make('is_admin')->label('Admin'),
+                Tables\Filters\TernaryFilter::make('is_subscribed')->label('Subscribed'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
+    public static function getRelations(): array { return []; }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
+            'index'  => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
-            'view' => Pages\ViewUser::route('/{record}'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'view'   => Pages\ViewUser::route('/{record}'),
+            'edit'   => Pages\EditUser::route('/{record}/edit'),
         ];
     }
 }

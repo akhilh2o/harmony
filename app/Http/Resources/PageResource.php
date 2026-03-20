@@ -14,6 +14,18 @@ class PageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id'            => $this->id,
+            'title'         => $this->title,
+            'subtitle'      => $this->subtitle,
+            'slug'          => $this->slug,
+            'content'       => $this->content,
+            'status'        => $this->status,
+            'feature_image' => $this->feature_image
+                ? asset('storage/' . $this->feature_image)
+                : null,
+            'created_at'    => $this->created_at,
+            'updated_at'    => $this->updated_at,
+        ];
     }
 }

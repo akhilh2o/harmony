@@ -3,81 +3,79 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SessionCategoryResource\Pages;
-use App\Filament\Resources\SessionCategoryResource\RelationManagers;
 use App\Models\SessionCategory;
 use Filament\Forms;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SessionCategoryResource extends Resource
 {
-    protected static ?string $model = SessionCategory::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
-
+    protected static ?string $model           = SessionCategory::class;
+    protected static ?string $navigationIcon  = 'heroicon-o-circle-stack';
     protected static ?string $navigationGroup = 'Session Management';
+    protected static ?int    $navigationSort  = 1;
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\Group::make()
-                    ->schema([
-                        Section::make('Session Category Details')
-                            ->description('Manage your session categories here.')
-                            ->schema([
-                                Forms\Components\TextInput::make('id')
-                                    ->hidden(),
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, $set) {
-                                        $set('slug', str($state)->slug());
-                                    })
-                                    ->placeholder('Enter category name')
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('slug')
-                                    ->required()
-                                    ->unique(SessionCategory::class, 'slug', ignoreRecord: true)
-                                    ->placeholder('Enter category slug')
-                                    ->maxLength(255),
-                                Forms\Components\Textarea::make('description')
-                                    ->required()
-                                    ->placeholder('Enter category description')
-                                    ->rows(6)
-                                    ->columnSpanFull(),
-                                Forms\Components\FileUpload::make('image')
-                                    ->required()
-                                    ->directory('session-categories')
-                                    ->imageEditor()
-                                    ->image()
-                                    ->columnSpanFull(),
-                            ])
-                            ->columns(2),
+        return $form->schema([
+            Forms\Components\Group::make()->schema([
 
-                    ])
-                    ->columnSpan(['lg' => 2]),
-
-                Forms\Components\Group::make()
+                Section::make('Session Category Details')
+                    ->description('Manage your session categories here.')
                     ->schema([
-                        Forms\Components\Section::make('Category Settings')
-                            ->description('Manage settings for this category.')
-                            ->schema([
-                                Forms\Components\Toggle::make('is_active')->required(),
-                                Forms\Components\ColorPicker::make('color')
-                                    ->placeholder('Pick a color'),
-                            ])
-                            ->columns(1),
+                        Forms\Components\TextInput::make('id')->hidden(),
+
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Enter category name')
+                            ->lazy()
+                            ->afterStateUpdated(function ($state, $set) {
+                                $set('slug', str($state)->slug());
+                            }),
+
+                        Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Enter category slug')
+                            ->unique(SessionCategory::class, 'slug', ignoreRecord: true),
+
+                        Forms\Components\Textarea::make('description')
+                            ->required()
+                            ->placeholder('Enter category description')
+                            ->rows(6)
+                            ->columnSpanFull(),
+
+                        Forms\Components\FileUpload::make('image')
+                            ->disk('public')                    // ✅ disk explicitly set
+                            ->directory('session-categories')
+                            ->image()
+                            ->imageEditor()
+                            ->maxSize(5120)
+                            ->columnSpanFull()
+                            // ✅ create pe required, edit pe optional (existing file keep)
+                            ->required(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord),
                     ])
-                    ->columnSpan(['lg' => 1]),
-            ])
-            ->columns(3);
+                    ->columns(2),
+
+            ])->columnSpan(['lg' => 2]),
+
+            Forms\Components\Group::make()->schema([
+
+                Section::make('Category Settings')
+                    ->description('Manage settings for this category.')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')->required(),
+                        Forms\Components\ColorPicker::make('color')
+                            ->placeholder('Pick a color'),
+                    ]),
+
+            ])->columnSpan(['lg' => 1]),
+
+        ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -85,31 +83,18 @@ class SessionCategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
-                    ->circular()
-                    ->size(50)
-                    ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
+                    ->disk('public')                            // ✅ disk set for table too
+                    ->circular()->size(50),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('slug')->searchable(),
                 Tables\Columns\ColorColumn::make('color'),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
+                Tables\Columns\IconColumn::make('is_active')->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
+                    ->dateTime()->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
+            ->filters([])
+            ->actions([Tables\Actions\EditAction::make()])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -117,19 +102,14 @@ class SessionCategoryResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
+    public static function getRelations(): array { return []; }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSessionCategories::route('/'),
+            'index'  => Pages\ListSessionCategories::route('/'),
             'create' => Pages\CreateSessionCategory::route('/create'),
-            'edit' => Pages\EditSessionCategory::route('/{record}/edit'),
+            'edit'   => Pages\EditSessionCategory::route('/{record}/edit'),
         ];
     }
 }

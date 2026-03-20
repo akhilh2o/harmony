@@ -52,9 +52,22 @@ class PageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    // public function show($id): JsonResponse
+    // {
+    //     $page = Page::find($id);
+
+    //     if (is_null($page)) {
+    //         return $this->sendError('Page not found.');
+    //     }
+
+    //     return $this->sendResponse(new PageResource($page), 'Page retrieved successfully.');
+    // }
     public function show($id): JsonResponse
     {
-        $page = Page::find($id);
+        // ID ya slug dono se dhundo
+        $page = ctype_digit((string) $id)
+            ? Page::find($id)
+            : Page::where('slug', $id)->first();
 
         if (is_null($page)) {
             return $this->sendError('Page not found.');
