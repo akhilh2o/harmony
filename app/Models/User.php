@@ -15,6 +15,8 @@ class User extends Authenticatable
         'name', 'email', 'avatar', 'phone_code', 'phone', 'password',
         'provider', 'provider_id', 'otp_code', 'otp_expires_at',
         'is_subscribed', 'subscription_expires_at', 'subscription_plan',
+        'dob',
+        'gender',
     ];
 
     protected $hidden = [

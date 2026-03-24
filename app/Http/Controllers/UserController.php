@@ -25,11 +25,13 @@ class UserController extends Controller
             'name'       => 'sometimes|string|max:255',
             'email'      => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'phone_code' => 'nullable|string|max:10',
+            'dob'        => 'nullable|date|before:today',
+            'gender'     => 'nullable|in:male,female,other',
             'phone'      => ['nullable', 'string', Rule::unique('users')->ignore($user->id)],
             'avatar'     => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->only(['name', 'email', 'phone_code', 'phone']);
+        $data = $request->only(['name', 'email', 'phone_code', 'phone', 'dob', 'gender']);
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
@@ -42,20 +44,31 @@ class UserController extends Controller
     }
 
     /** POST /user/change-password */
+    // public function changePassword(Request $request): JsonResponse
+    // {
+    //     $request->validate([
+    //         'new_password'     => 'required|string|min:8|confirmed',
+    //     ]);
+
+    //     $user = $request->user();
+
+    //     // if (!Hash::check($request->current_password, $user->password)) {
+    //     //     return $this->sendError('Current password is incorrect.', [], 422);
+    //     // }
+
+    //     $user->update(['password' => Hash::make($request->new_password)]);
+
+    //     return $this->sendResponse([], 'Password changed successfully.');
+    // }
     public function changePassword(Request $request): JsonResponse
     {
         $request->validate([
-            'current_password' => 'required|string',
-            'new_password'     => 'required|string|min:8|confirmed',
+            'new_password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = $request->user();
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return $this->sendError('Current password is incorrect.', [], 422);
-        }
-
-        $user->update(['password' => Hash::make($request->new_password)]);
+        $request->user()->update([
+            'password' => Hash::make($request->new_password)
+        ]);
 
         return $this->sendResponse([], 'Password changed successfully.');
     }
