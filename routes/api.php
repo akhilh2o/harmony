@@ -3,33 +3,35 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\SubscriptionPlanController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserActivityController;
 
-
-
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 Route::resource('pages', PageController::class);
-Route::get   ('/pages/{page}', [PageController::class, 'show']);
+Route::get('/pages/{page}', [PageController::class, 'show']);
 
 // ─── SESSION AUDIOS (public) ──────────────────────────────────
 Route::get('/session-categories',           [SessionController::class, 'sessionCategories']);
 Route::get('/session-audios',               [SessionController::class, 'sessionAudios']);
-Route::get('/session-audios/free',          [SessionController::class, 'freeSessionAudios']);     // ⚠️ {id} se pehle zaroori
+Route::get('/session-audios/free',          [SessionController::class, 'freeSessionAudios']);
 Route::get('/session-audios/category/{id}', [SessionController::class, 'sessionAudioByCategoryId']);
-// Route::get('/session-audios/{id}',          [SessionController::class, 'sessionAudioById']);      // last mein
-Route::get('/session-audios/{param}',       [SessionController::class, 'sessionAudioByIdOrSlug']); // ← ek hi route
+Route::get('/session-audios/{param}',       [SessionController::class, 'sessionAudioByIdOrSlug']);
+
+// ─── SUBSCRIPTION PLANS (public) ─────────────────────────────
+Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
 
 // ─── AUTH ROUTES ──────────────────────────────────────────────
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login',    'login');
+    Route::post('/social-login', [AuthController::class, 'socialLogin']);
     Route::get('/login/with/{provider}',          'redirectToProvider');
     Route::get('/login/with/{provider}/callback', 'handleProviderCallback');
 });
@@ -45,6 +47,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get ('user/profile',         [UserController::class, 'profile']);
     Route::put ('user/profile',         [UserController::class, 'updateProfile']);
     Route::post('user/change-password', [UserController::class, 'changePassword']);
+
+    // ─── Subscription ─────────────────────────────────
+    Route::get   ('user/subscription',          [SubscriptionPlanController::class, 'status']);
+    Route::post  ('user/subscription/activate', [SubscriptionPlanController::class, 'activate']);
+    Route::delete('user/subscription/cancel',   [SubscriptionPlanController::class, 'cancel']);
 
     // Premium sessions (auth required)
     Route::get('/session-audios/premium', [SessionController::class, 'premiumSessionAudios']);
