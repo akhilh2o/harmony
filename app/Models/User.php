@@ -40,6 +40,16 @@ class User extends Authenticatable
         return $this->hasMany(Playlist::class);
     }
 
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
     // Check if subscription is still valid
     public function hasActiveSubscription(): bool
     {

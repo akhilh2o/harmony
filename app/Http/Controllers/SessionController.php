@@ -51,7 +51,13 @@ class SessionController extends Controller
         }
 
         // Sort & Limit
-        if ($request->boolean('is_top')) {
+        if ($request->boolean('top_played')) {
+            $query->orderBy('play_count', 'desc');
+            $limit = min((int) ($request->limit ?? 10), 50);
+        } elseif ($request->boolean('latest')) {
+            $query->orderBy('created_at', 'desc');
+            $limit = min((int) ($request->limit ?? 10), 50);
+        } elseif ($request->boolean('is_top')) {
             $query->orderBy('created_at', 'desc');
             $limit = min((int) ($request->limit ?? 10), 50);
         } else {

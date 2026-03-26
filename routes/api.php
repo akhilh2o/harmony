@@ -6,6 +6,10 @@ use App\Http\Controllers\SessionController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SupportController;
+use App\Http\Controllers\UserActivityController;
+
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -29,6 +33,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('/login/with/{provider}',          'redirectToProvider');
     Route::get('/login/with/{provider}/callback', 'handleProviderCallback');
 });
+Route::post('/support', [SupportController::class, 'submit']);
 
 // ─── PROTECTED ROUTES (Bearer Token required) ─────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -43,6 +48,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Premium sessions (auth required)
     Route::get('/session-audios/premium', [SessionController::class, 'premiumSessionAudios']);
+
+    // ─── Activity ─────────────────────────────────────
+    Route::post  ('/activity',       [UserActivityController::class, 'trackPlay']);
+    Route::get   ('/activity',       [UserActivityController::class, 'getActivities']);
+    Route::delete('/activity',       [UserActivityController::class, 'clearActivities']);
+
+    // ─── Wishlist ─────────────────────────────────────
+    Route::get   ('/wishlist',                    [UserActivityController::class, 'getWishlist']);
+    Route::post  ('/wishlist',                    [UserActivityController::class, 'addToWishlist']);
+    Route::post  ('/wishlist/toggle',             [UserActivityController::class, 'toggleWishlist']);
+    Route::delete('/wishlist/{sessionAudioId}',   [UserActivityController::class, 'removeFromWishlist']);
 
     // Playlists
     Route::post  ('/playlists',                       [SessionController::class, 'createPlaylist']);
