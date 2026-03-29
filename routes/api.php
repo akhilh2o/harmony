@@ -17,7 +17,6 @@ Route::get('/user', function (Request $request) {
 Route::resource('pages', PageController::class);
 Route::get('/pages/{page}', [PageController::class, 'show']);
 
-// ─── SESSION AUDIOS (public) ──────────────────────────────────
 Route::get('/session-categories',           [SessionController::class, 'sessionCategories']);
 Route::get('/session-audios',               [SessionController::class, 'sessionAudios']);
 Route::get('/session-audios/free',          [SessionController::class, 'freeSessionAudios']);
@@ -27,11 +26,16 @@ Route::get('/session-audios/{param}',       [SessionController::class, 'sessionA
 // ─── SUBSCRIPTION PLANS (public) ─────────────────────────────
 Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
 
+// Store webhooks — no auth, Google/Apple call these
+Route::post('/webhooks/google-play', [SubscriptionPlanController::class, 'googlePlayWebhook']);
+Route::post('/webhooks/apple',       [SubscriptionPlanController::class, 'appleWebhook']);
+
 // ─── AUTH ROUTES ──────────────────────────────────────────────
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login',    'login');
-    Route::post('/social-login', [AuthController::class, 'socialLogin']);
+        Route::post('/social-login', [AuthController::class, 'socialLogin']);
+
     Route::get('/login/with/{provider}',          'redirectToProvider');
     Route::get('/login/with/{provider}/callback', 'handleProviderCallback');
 });
@@ -39,33 +43,30 @@ Route::post('/support', [SupportController::class, 'submit']);
 
 // ─── PROTECTED ROUTES (Bearer Token required) ─────────────────
 Route::middleware('auth:sanctum')->group(function () {
-
     // Logout
     Route::post('logout', [AuthController::class, 'logout']);
-
     // User Profile
     Route::get ('user/profile',         [UserController::class, 'profile']);
     Route::put ('user/profile',         [UserController::class, 'updateProfile']);
     Route::post('user/change-password', [UserController::class, 'changePassword']);
 
-    // ─── Subscription ─────────────────────────────────
+    Route::get('/user/stats', [UserActivityController::class, 'getStats']);
+
+    // Subscription
     Route::get   ('user/subscription',          [SubscriptionPlanController::class, 'status']);
     Route::post  ('user/subscription/activate', [SubscriptionPlanController::class, 'activate']);
+    Route::post  ('user/subscription/verify',   [SubscriptionPlanController::class, 'verify']);
     Route::delete('user/subscription/cancel',   [SubscriptionPlanController::class, 'cancel']);
 
-    // Premium sessions (auth required)
     Route::get('/session-audios/premium', [SessionController::class, 'premiumSessionAudios']);
-
-    // ─── Activity ─────────────────────────────────────
-    Route::post  ('/activity',       [UserActivityController::class, 'trackPlay']);
-    Route::get   ('/activity',       [UserActivityController::class, 'getActivities']);
-    Route::delete('/activity',       [UserActivityController::class, 'clearActivities']);
-
+    Route::post  ('/activity', [UserActivityController::class, 'trackPlay']);
+    Route::get   ('/activity', [UserActivityController::class, 'getActivities']);
+    Route::delete('/activity', [UserActivityController::class, 'clearActivities']);
     // ─── Wishlist ─────────────────────────────────────
-    Route::get   ('/wishlist',                    [UserActivityController::class, 'getWishlist']);
-    Route::post  ('/wishlist',                    [UserActivityController::class, 'addToWishlist']);
-    Route::post  ('/wishlist/toggle',             [UserActivityController::class, 'toggleWishlist']);
-    Route::delete('/wishlist/{sessionAudioId}',   [UserActivityController::class, 'removeFromWishlist']);
+    Route::get   ('/wishlist',                  [UserActivityController::class, 'getWishlist']);
+    Route::post  ('/wishlist',                  [UserActivityController::class, 'addToWishlist']);
+    Route::post  ('/wishlist/toggle',           [UserActivityController::class, 'toggleWishlist']);
+    Route::delete('/wishlist/{sessionAudioId}', [UserActivityController::class, 'removeFromWishlist']);
 
     // Playlists
     Route::post  ('/playlists',                       [SessionController::class, 'createPlaylist']);

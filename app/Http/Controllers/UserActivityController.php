@@ -76,6 +76,45 @@ class UserActivityController extends Controller
         return $this->sendResponse([], 'Activity history cleared.');
     }
 
+    // GET /user/stats
+    public function getStats(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        // ── Total listening time ──────────────────────────────
+        $totalSeconds = UserActivity::where('user_id', $userId)
+            ->sum('listened_seconds');
+
+        // ── Day Streak ────────────────────────────────────────
+        // Consecutive days user ne kuch suna
+        $streak = 0;
+        $checkDate = now()->startOfDay();
+
+        while (true) {
+            $playedOnDay = UserActivity::where('user_id', $userId)
+                ->whereDate('created_at', $checkDate)
+                ->exists();
+
+            if (!$playedOnDay) break;
+
+            $streak++;
+            $checkDate = $checkDate->subDay();
+        }
+
+        // ── Format time ───────────────────────────────────────
+        $hours   = floor($totalSeconds / 3600);
+        $minutes = floor(($totalSeconds % 3600) / 60);
+        $formatted = $hours > 0
+            ? "{$hours}h {$minutes}m"
+            : "{$minutes}m";
+
+        return $this->sendResponse([
+            'total_seconds'    => $totalSeconds,
+            'listening_time'   => $formatted,   // "2h 30m" ya "45m"
+            'day_streak'       => $streak,
+        ], 'Stats retrieved.');
+    }
+
     // ─── WISHLIST ──────────────────────────────────────────────
 
     // Wishlist mein add karo
