@@ -40,6 +40,11 @@ class User extends Authenticatable
         return $this->hasMany(Playlist::class);
     }
 
+    public function canAccessPanel(): bool
+    {
+        return $this->is_admin == 1;
+    }
+
     public function activities()
     {
         return $this->hasMany(UserActivity::class);
