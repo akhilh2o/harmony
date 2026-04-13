@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Filament\Models\Contracts\FilamentUser;  // ← ADD
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -40,9 +42,9 @@ class User extends Authenticatable
         return $this->hasMany(Playlist::class);
     }
 
-    public function canAccessPanel(): bool
+    public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_admin == 1;
+        return $this->is_admin == 1;  // ye sahi hai, 1/0 ke liye == kaam karta hai
     }
 
     public function activities()
