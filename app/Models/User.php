@@ -14,26 +14,42 @@ class User extends Authenticatable implements FilamentUser
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'avatar', 'phone_code', 'phone', 'password',
-        'provider', 'provider_id', 'otp_code', 'otp_expires_at',
-        'is_subscribed', 'subscription_expires_at', 'subscription_plan',
+        'name',
+        'email',
+        'avatar',
+        'phone_code',
+        'phone',
+        'password',
+        'provider',
+        'provider_id',
+        'otp_code',
+        'otp_expires_at',
+        'is_admin',
+        'is_active',
+        'is_subscribed',
+        'subscription_expires_at',
+        'subscription_plan',
         'dob',
         'gender',
     ];
 
     protected $hidden = [
-        'password', 'remember_token', 'otp_code',
+        'password',
+        'remember_token',
+        'otp_code',
     ];
 
     protected function casts(): array
     {
         return [
-            'password'                => 'hashed',
-            'email_verified_at'       => 'datetime',
-            'phone_verified_at'       => 'datetime',
-            'otp_expires_at'          => 'datetime',
+            'password' => 'hashed',
+            'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'otp_expires_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
-            'is_subscribed'           => 'boolean',
+            'is_admin' => 'boolean',
+            'is_active' => 'boolean',
+            'is_subscribed' => 'boolean',
         ];
     }
 

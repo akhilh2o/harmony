@@ -28,7 +28,7 @@ class RegisterRequest extends FormRequest
             'dob'           => 'nullable|date|before:today',
             'gender'        => 'nullable|in:male,female,other',
             'phone'         => ['nullable', 'string', 'unique:users,phone'],
-            'password'      => ['required', 'string', 'min:8', 'confirmed'],
+            'password'      => ['required', 'string', 'min:6', 'confirmed'],
         ];
     }
 }

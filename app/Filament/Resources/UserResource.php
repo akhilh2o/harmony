@@ -39,6 +39,17 @@ class UserResource extends Resource
                     Forms\Components\TextInput::make('phone')
                         ->tel()->maxLength(20)
                         ->unique(User::class, 'phone', ignoreRecord: true),
+                    Forms\Components\DatePicker::make('dob')
+                        ->label('Date of Birth')
+                        ->displayFormat('Y-m-d')
+                        ->native(false),
+                    Forms\Components\Select::make('gender')
+                        ->options([
+                            'male' => 'Male',
+                            'female' => 'Female',
+                            'other' => 'Other',
+                        ])
+                        ->placeholder('Select Gender'),
                     Forms\Components\TextInput::make('password')
                         ->password()->maxLength(255)
                         ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
@@ -89,6 +100,8 @@ class UserResource extends Resource
                     ->circular()->size(40)->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&color=c9a84c&background=27221a'),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('email')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('dob')->date(),
+                Tables\Columns\TextColumn::make('gender')->badge(),
                 Tables\Columns\TextColumn::make('phone')->searchable()->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')->label('Active')->boolean()->sortable(),
                 Tables\Columns\IconColumn::make('is_admin')->label('Admin')->boolean()->sortable(),
